@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Bubble Shooter — 1000 Levels</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,Arial;background:#10102a;color:#fff}body{display:flex;justify-content:center;background:radial-gradient(circle at 50% 0,#3c2570,#11112b 55%,#080817)}
+#app{width:min(100vw,900px);height:100%;display:flex;flex-direction:column}
+header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#171735dd;border-bottom:1px solid #ffffff20;backdrop-filter:blur(10px)}
+.brand{font-weight:900;font-size:18px;color:#ffe66d}.hud{display:flex;gap:8px}.pill{background:#ffffff12;border:1px solid #ffffff1c;border-radius:14px;padding:7px 10px;font-size:13px}
+#gameWrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center;align-items:center}
+canvas{width:100%;height:100%;touch-action:none}
+#menu{position:absolute;inset:0;background:#0b0b20dd;display:flex;align-items:center;justify-content:center;padding:20px;z-index:5}
+.card{width:min(520px,94vw);padding:28px;border:1px solid #ffffff20;border-radius:28px;background:linear-gradient(145deg,#25234ddd,#111126ee);box-shadow:0 25px 80px #0008;text-align:center}
+h1{margin:0 0 8px;font-size:clamp(34px,8vw,64px);background:linear-gradient(90deg,#ff5fa2,#ffe66d,#64e8ff);color:transparent;background-clip:text}
+.sub{opacity:.75;margin-bottom:20px}.buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+button{border:0;border-radius:15px;padding:13px 15px;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff4f9a,#7b61ff);cursor:pointer;box-shadow:0 8px 25px #0004}
+button.secondary{background:#ffffff12;border:1px solid #ffffff1c}button:active{transform:scale(.97)}
+#levels{position:absolute;inset:0;background:#0b0b20f5;z-index:6;padding:20px;overflow:auto;display:none}
+.levelGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:8px;max-width:760px;margin:15px auto}
+.levelGrid button{padding:11px 5px;background:#ffffff12;border:1px solid #ffffff18}.levelGrid button.lock{opacity:.3;cursor:not-allowed}
+#toast{position:absolute;left:50%;top:18%;transform:translateX(-50%);padding:10px 18px;border-radius:20px;background:#111c;color:#fff;display:none;z-index:4;font-weight:800}
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="brand">🫧 BUBBLE SHOOTER</div><div class="hud"><div class="pill">Level <b id="level">1</b>/1000</div><div class="pill">⭐ <b id="stars">0</b></div><div class="pill">Score <b id="score">0</b></div></div></header>
+<div id="gameWrap"><canvas id="c"></canvas><div id="toast"></div>
+<div id="menu"><div class="card"><h1>BUBBLE SHOOTER</h1><div class="sub">1000-level candy challenge • Match 3+ • Bank shots • Drop bubbles</div><div class="buttons"><button id="play">PLAY</button><button id="choose" class="secondary">LEVELS</button><button id="reset" class="secondary">RESET PROGRESS</button></div></div></div>
+<div id="levels"><div style="display:flex;justify-content:space-between;align-items:center"><h2>SELECT LEVEL</h2><button id="closeLevels" class="secondary">CLOSE</button></div><div class="levelGrid" id="grid"></div></div>
+</div></div>
+<script>
+"use strict";
+const canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
+const levelEl=document.getElementById("level"),scoreEl=document.getElementById("score"),starsEl=document.getElementById("stars"),menu=document.getElementById("menu"),levels=document.getElementById("levels"),grid=document.getElementById("grid"),toast=document.getElementById("toast");
+let W=0,H=0,dpr=1,level=Math.max(1,Math.min(1000,+localStorage.getItem("bsLevel")||1)),score=0,stars=+(localStorage.getItem("bsStars")||0);
+let board=[],cols=6,rows=9,R=22,cx=0,top=20,shooterX=0,shooterY=0,cur=0,next=1,angle=-Math.PI/2,shots=0,maxMiss=5,gameOver=false,anim=[];
+const colors=["#ff4d78","#ffd84d","#59e88d","#4db8ff","#b86cff","#ff8d4d","#42e6d3"];
+function cfg(l){return {colors:Math.min(7,3+Math.floor((l-1)/180)),rows:Math.min(11,5+Math.floor((l-1)/110)),miss:Math.max(2,6-Math.floor((l-1)/220)),seed:l*99991};}
+function resize(){const r=canvas.getBoundingClientRect();dpr=Math.min(2,devicePixelRatio||1);W=r.width;H=r.height;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);R=Math.max(14,Math.min(25,W/15));cols=Math.max(6,Math.floor(W/(R*2.02)));cx=W/2;top=Math.max(18,R);shooterX=cx;shooterY=H-R*1.8;if(board.length) draw();}
+addEventListener("resize",resize);
+function rand(seed){let x=Math.sin(seed)*43758.5453;return x-Math.floor(x)}
+function newGame(l=level){level=l;const c=cfg(level);board=[];score=0;shots=0;maxMiss=c.miss;gameOver=false;anim=[];cur=Math.floor(rand(c.seed)*c.colors);next=Math.floor(rand(c.seed+7)*c.colors);for(let y=0;y<c.rows;y++){let row=[];for(let x=0;x<cols;x++){let p=rand(c.seed+y*97+x*13);row.push(p<.82?Math.floor(rand(c.seed+y*41+x*9)*c.colors):-1)}board.push(row)};while(board.length<Math.max(1,c.rows))board.push([]);updateHUD();menu.style.display="none";levels.style.display="none";draw()}
+function updateHUD(){levelEl.textContent=level;scoreEl.textContent=score;starsEl.textContent=stars}
+function pos(x,y){return {x:x*R*2+R+(y%2)*R,y:top+y*R*1.73}}
+function neighbors(x,y){let odd=y%2;return odd?[[x-1,y-1],[x,y-1],[x-1,y],[x+1,y],[x-1,y+1],[x,y+1]]:[[x,y-1],[x+1,y-1],[x-1,y],[x+1,y],[x,y+1],[x+1,y+1]]}
+function valid(x,y){return y>=0&&y<board.length&&x>=0&&x<cols}
+function group(sx,sy){const target=board[sy]?.[sx];if(target<0)return[];let out=[],q=[[sx,sy]],seen=new Set([sx+","+sy]);while(q.length){let [x,y]=q.pop();out.push([x,y]);for(const [nx,ny] of neighbors(x,y)){if(valid(nx,ny)&&board[ny][nx]===target&&!seen.has(nx+","+ny)){seen.add(nx+","+ny);q.push([nx,ny])}}}return out}
+function connected(){let keep=new Set(),q=[];for(let x=0;x<cols;x++)if(valid(x,0)&&board[0][x]>=0){q.push([x,0]);keep.add(x+",0")}while(q.length){let [x,y]=q.pop();for(const [nx,ny] of neighbors(x,y))if(valid(nx,ny)&&board[ny][nx]>=0&&!keep.has(nx+","+ny)){keep.add(nx+","+ny);q.push([nx,ny])}}return keep}
+function addRow(){let c=cfg(level);board.unshift(Array.from({length:cols},(_,x)=>Math.floor(rand(c.seed+shots*71+x*17)%1*c.colors));for(let y=board.length-1;y>=0;y--){}}
+function findAttach(px,py){let best=null,bd=1e9;for(let y=0;y<Math.min(board.length+1,14);y++)for(let x=0;x<cols;x++){if(board[y]&&board[y][x]>=0)continue;let p=pos(x,y),d=(p.x-px)**2+(p.y-py)**2;if(d<bd){bd=d;best=[x,y]}}return best||[Math.floor(cols/2),0]}
+function shoot(){if(gameOver||menu.style.display!=="none")return;const speed=12, sx=shooterX,sy=shooterY;let vx=Math.cos(angle)*speed,vy=Math.sin(angle)*speed,x=sx,y=sy;for(let i=0;i<500;i++){x+=vx;y+=vy;if(x<R||x>W-R)vx*=-1;if(y<top+R){y=top+R;break}let hit=false;for(let yy=0;yy<board.length&&!hit;yy++)for(let xx=0;xx<cols;xx++)if(board[yy][xx]>=0){let p=pos(xx,yy);if((p.x-x)**2+(p.y-y)**2<(R*1.75)**2){hit=true;break}}if(hit)break}let a=findAttach(x,y);if(!board[a[1]])board[a[1]]=Array(cols).fill(-1);board[a[1]][a[0]]=cur;let g=group(a[0],a[1]);shots++;if(g.length>=3){g.forEach(([xx,yy])=>{board[yy][xx]=-1;score+=10});let keep=connected(),drop=[];for(let yy=0;yy<board.length;yy++)for(let xx=0;xx<cols;xx++)if(board[yy][xx]>=0&&!keep.has(xx+","+yy)){drop.push([xx,yy]);board[yy][xx]=-1}score+=drop.length*25;shots=0}else if(shots>=maxMiss){addRow();shots=0}cur=next;next=Math.floor(Math.random()*cfg(level).colors);cleanup();checkEnd();updateHUD();draw()}
+function cleanup(){while(board.length&&board[board.length-1].every(v=>v<0))board.pop()}
+function checkEnd(){for(let y=0;y<board.length;y++)for(let x=0;x<cols;x++)if(board[y][x]>=0&&pos(x,y).y+R>=shooterY-R){gameOver=true;setTimeout(()=>alert("Game Over! Level "+level+" — Try again."),50);return}let left=board.flat().filter(v=>v>=0).length;if(left===0){let s=score>=level*120?3:score>=level*70?2:1;stars=Math.max(stars,s);localStorage.setItem("bsStars",stars);if(level<1000){toast.textContent="LEVEL "+level+" COMPLETE! ⭐".repeat(s);toast.style.display="block";setTimeout(()=>{toast.style.display="none";newGame(level+1);localStorage.setItem("bsLevel",level)},900)}else{gameOver=true;setTimeout(()=>alert("🏆 AMAZING! You completed all 1000 levels!"),50)}}}
+function drawBubble(x,y,i,r=R){let g=ctx.createRadialGradient(x-r*.35,y-r*.45,r*.1,x,y,r);g.addColorStop(0,"#fff");g.addColorStop(.13,colors[i]);g.addColorStop(1,colors[i]);ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#ffffff55";ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle="#fff8";ctx.beginPath();ctx.arc(x-r*.35,y-r*.42,r*.16,0,Math.PI*2);ctx.fill()}
+function draw(){ctx.clearRect(0,0,W,H);let bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#171745");bg.addColorStop(1,"#09091e");ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);for(let y=0;y<board.length;y++)for(let x=0;x<cols;x++)if(board[y]&&board[y][x]>=0){let p=pos(x,y);drawBubble(p.x,p.y,board[y][x])}let ax=shooterX,ay=shooterY;ctx.save();ctx.setLineDash([8,8]);ctx.lineWidth=2;ctx.strokeStyle="#fff8";ctx.beginPath();ctx.moveTo(ax,ay);let vx=Math.cos(angle),vy=Math.sin(angle),xx=ax,yy=ay;for(let i=0;i<30;i++){xx+=vx*18;yy+=vy*18;if(xx<R||xx>W-R){vx*=-1;xx=Math.max(R,Math.min(W-R,xx))}if(yy<top+R)break;ctx.lineTo(xx,yy)}ctx.stroke();ctx.restore();drawBubble(shooterX,shooterY,cur,R*1.05);drawBubble(Math.min(W-30,shooterX+R*3),shooterY,R?next:next,R*.62);ctx.fillStyle="#ffffff99";ctx.font="12px system-ui";ctx.textAlign="center";ctx.fillText("NEXT",Math.min(W-30,shooterX+R*3),shooterY+R*1.35)}
+function pointer(e){let r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;angle=Math.atan2(y-shooterY,x-shooterX);angle=Math.max(-Math.PI+.15,Math.min(-.15,angle));draw()}
+canvas.addEventListener("pointermove",pointer);canvas.addEventListener("pointerdown",e=>{pointer(e);shoot()});addEventListener("keydown",e=>{if(e.code==="Space")shoot()});
+document.getElementById("play").onclick=()=>newGame(level);
+document.getElementById("choose").onclick=()=>{levels.style.display="block";grid.innerHTML="";for(let i=1;i<=1000;i++){let b=document.createElement("button");b.textContent=i;if(i>level)b.className="lock";else b.onclick=()=>newGame(i);grid.appendChild(b)}};
+document.getElementById("closeLevels").onclick=()=>levels.style.display="none";
+document.getElementById("reset").onclick=()=>{if(confirm("Reset all progress?")){localStorage.removeItem("bsLevel");localStorage.removeItem("bsStars");level=1;stars=0;updateHUD();newGame(1)}};
+resize();updateHUD();
+</script>
+</body></html>
