@@ -186,7 +186,7 @@ function makeEnemy(){
  let x,z;do{x=Math.random()*34-17;z=Math.random()*25-12.5}while(Math.hypot(x-camera.position.x,z-camera.position.z)<8);
  root.position.set(x,0,z);
  const hpMax=3+Math.floor(wave/3);
- root.userData={hp:hpMax,maxHp:hpMax,speed:.52+wave*.045,phase:Math.random()*6.28,attack:1.2+Math.random(),mixer,run:false};
+ root.userData=Object.assign(root.userData,{hp:hpMax,maxHp:hpMax,speed:.52+wave*.045,phase:Math.random()*6.28,attack:1.2+Math.random(),mixer,run:false});
  scene.add(root);enemies.push(root);
  const ring=new THREE.Mesh(new THREE.RingGeometry(.55,.63,32),new THREE.MeshBasicMaterial({color:0xff2424,transparent:true,opacity:.55,side:THREE.DoubleSide}));
  ring.rotation.x=-Math.PI/2;ring.position.y=.018;root.add(ring);
@@ -194,7 +194,7 @@ function makeEnemy(){
  barBg.position.set(0,3.05,0);barBg.userData.isBarBg=true;root.add(barBg);
  const bar=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.06),new THREE.MeshBasicMaterial({color:0x35ff65}));
  bar.position.set(0,3.05,.01);bar.userData.isHealth=true;root.add(bar);
-}function spawnWave(){const count=Math.min(4+wave*2,22);for(let i=0;i<count;i++)setTimeout(()=>{if(!gameOver)makeEnemy()},i*350)}
+}function spawnWave(){const count=Math.min(4+wave*2,22);for(let i=0;i<count;i++)setTimeout(()=>{if(!gameOver)makeEnemy()},(enemyGLTF?i*350:i*650+900))}
 function updateUI(){document.getElementById('score').textContent='SCORE: '+score;document.getElementById('wave').textContent='WAVE: '+wave;document.getElementById('hpText').textContent=Math.max(0,Math.ceil(hp));document.getElementById('health').style.width=Math.max(0,hp)+'%'}
 function damage(n){
  if(gameOver)return;hp-=n;lastDamage=performance.now();updateUI();
