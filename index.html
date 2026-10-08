@@ -3,64 +3,362 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#10152f">
 <title>Bubble Shooter — 1000 Levels</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,Arial;background:#10102a;color:#fff}body{display:flex;justify-content:center;background:radial-gradient(circle at 50% 0,#3c2570,#11112b 55%,#080817)}
-#app{width:min(100vw,900px);height:100%;display:flex;flex-direction:column}
-header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#171735dd;border-bottom:1px solid #ffffff20;backdrop-filter:blur(10px)}
-.brand{font-weight:900;font-size:18px;color:#ffe66d}.hud{display:flex;gap:8px}.pill{background:#ffffff12;border:1px solid #ffffff1c;border-radius:14px;padding:7px 10px;font-size:13px}
-#gameWrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center;align-items:center}
-canvas{width:100%;height:100%;touch-action:none}
-#menu{position:absolute;inset:0;background:#0b0b20dd;display:flex;align-items:center;justify-content:center;padding:20px;z-index:5}
-.card{width:min(520px,94vw);padding:28px;border:1px solid #ffffff20;border-radius:28px;background:linear-gradient(145deg,#25234ddd,#111126ee);box-shadow:0 25px 80px #0008;text-align:center}
-h1{margin:0 0 8px;font-size:clamp(34px,8vw,64px);background:linear-gradient(90deg,#ff5fa2,#ffe66d,#64e8ff);color:transparent;background-clip:text}
-.sub{opacity:.75;margin-bottom:20px}.buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-button{border:0;border-radius:15px;padding:13px 15px;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff4f9a,#7b61ff);cursor:pointer;box-shadow:0 8px 25px #0004}
-button.secondary{background:#ffffff12;border:1px solid #ffffff1c}button:active{transform:scale(.97)}
-#levels{position:absolute;inset:0;background:#0b0b20f5;z-index:6;padding:20px;overflow:auto;display:none}
-.levelGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:8px;max-width:760px;margin:15px auto}
-.levelGrid button{padding:11px 5px;background:#ffffff12;border:1px solid #ffffff18}.levelGrid button.lock{opacity:.3;cursor:not-allowed}
-#toast{position:absolute;left:50%;top:18%;transform:translateX(-50%);padding:10px 18px;border-radius:20px;background:#111c;color:#fff;display:none;z-index:4;font-weight:800}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:#080b1d;color:#fff}
+body{display:flex;justify-content:center}
+button{font:inherit}
+#app{width:min(100vw,980px);height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#171c45 0,#0a0d24 100%);position:relative}
+header{height:68px;flex:none;display:flex;align-items:center;gap:12px;padding:9px 14px;background:#101431e8;border-bottom:1px solid #ffffff16;backdrop-filter:blur(14px);z-index:10}
+.logo{font-weight:950;letter-spacing:.4px;font-size:17px;white-space:nowrap;background:linear-gradient(90deg,#ff5ca8,#ffd84d,#5ee7ff);color:transparent;background-clip:text}
+.hud{margin-left:auto;display:flex;gap:7px;align-items:center}
+.pill{min-width:78px;text-align:center;padding:7px 9px;border-radius:13px;background:#ffffff0e;border:1px solid #ffffff14;font-size:12px;color:#cdd3f7}
+.pill b{display:block;color:#fff;font-size:14px;margin-top:1px}
+.iconBtn{width:40px;height:40px;border:1px solid #ffffff16;border-radius:12px;background:#ffffff0b;color:#fff;cursor:pointer}
+#wrap{position:relative;flex:1;min-height:0}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.overlay{position:absolute;inset:0;z-index:20;background:#07091acc;display:flex;align-items:center;justify-content:center;padding:18px}
+.card{width:min(570px,94vw);padding:28px 24px;border:1px solid #ffffff1c;border-radius:28px;background:linear-gradient(145deg,#20265ceF,#0d102beF);box-shadow:0 28px 90px #0009;text-align:center}
+.hero{font-size:clamp(38px,8vw,72px);line-height:.95;font-weight:950;margin:0 0 12px;background:linear-gradient(90deg,#ff559f,#ffe06b,#61e7ff);color:transparent;background-clip:text}
+.card p{color:#cbd0ef;margin:8px auto 20px;max-width:470px;line-height:1.5}
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.btn{border:0;border-radius:15px;padding:13px 16px;color:#fff;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#ff4f9a,#765cff);box-shadow:0 9px 28px #0005}
+.btn.alt{background:#ffffff0d;border:1px solid #ffffff18;box-shadow:none}
+.btn:active{transform:scale(.97)}
+.small{font-size:12px;color:#9299c5;margin-top:16px}
+.hidden{display:none!important}
+#levels{align-items:flex-start;overflow:auto}
+.levelCard{width:min(850px,96vw);max-height:92vh;padding:22px;border-radius:25px;background:#101432f5;border:1px solid #ffffff18;box-shadow:0 20px 70px #0009}
+.levelTop{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.levelTop h2{margin:0;font-size:22px}
+.levelGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:7px}
+.levelBtn{min-height:48px;border:1px solid #ffffff15;border-radius:12px;background:#ffffff09;color:#fff;font-weight:800;cursor:pointer}
+.levelBtn.done{background:linear-gradient(135deg,#284d72,#28336e)}
+.levelBtn.current{outline:2px solid #ffd85c;background:linear-gradient(135deg,#8e3c76,#4a43a1)}
+.levelBtn.locked{opacity:.28;cursor:not-allowed}
+#message{position:absolute;left:50%;top:13%;transform:translateX(-50%);z-index:15;display:none;padding:11px 18px;border-radius:999px;background:#10152cf2;border:1px solid #ffffff1c;box-shadow:0 10px 35px #0008;font-weight:900;white-space:nowrap}
+#pause{align-items:center}
+.resultTitle{font-size:34px;font-weight:950;margin:0 0 5px}
+.stars{font-size:34px;letter-spacing:4px;margin:10px 0}
+@media(max-width:620px){
+ header{height:62px;padding:7px 9px}.logo{font-size:14px}.hud{gap:4px}.pill{min-width:61px;padding:5px 6px}.pill b{font-size:12px}.iconBtn{width:36px;height:36px}
+ .card{padding:24px 17px}.actions{grid-template-columns:1fr 1fr}.levelGrid{grid-template-columns:repeat(auto-fill,minmax(48px,1fr))}
+}
 </style>
 </head>
 <body>
 <div id="app">
-<header><div class="brand">🫧 BUBBLE SHOOTER</div><div class="hud"><div class="pill">Level <b id="level">1</b>/1000</div><div class="pill">⭐ <b id="stars">0</b></div><div class="pill">Score <b id="score">0</b></div></div></header>
-<div id="gameWrap"><canvas id="c"></canvas><div id="toast"></div>
-<div id="menu"><div class="card"><h1>BUBBLE SHOOTER</h1><div class="sub">1000-level candy challenge • Match 3+ • Bank shots • Drop bubbles</div><div class="buttons"><button id="play">PLAY</button><button id="choose" class="secondary">LEVELS</button><button id="reset" class="secondary">RESET PROGRESS</button></div></div></div>
-<div id="levels"><div style="display:flex;justify-content:space-between;align-items:center"><h2>SELECT LEVEL</h2><button id="closeLevels" class="secondary">CLOSE</button></div><div class="levelGrid" id="grid"></div></div>
-</div></div>
+<header>
+ <div class="logo">🫧 BUBBLE SHOOTER</div>
+ <div class="hud">
+  <div class="pill">LEVEL<b id="levelNo">1 / 1000</b></div>
+  <div class="pill">⭐ STARS<b id="stars">0</b></div>
+  <div class="pill">SCORE<b id="score">0</b></div>
+  <button class="iconBtn" id="levelsBtn" title="Levels">☷</button>
+  <button class="iconBtn" id="pauseBtn" title="Pause">Ⅱ</button>
+ </div>
+</header>
+<div id="wrap">
+ <canvas id="game"></canvas>
+ <div id="message"></div>
+
+ <div class="overlay" id="home">
+  <div class="card">
+   <h1 class="hero">BUBBLE<br>SHOOTER</h1>
+   <p>Match 3 or more bubbles, make bank shots and clear every bubble. <b>1000 levels</b> with increasing difficulty.</p>
+   <div class="actions">
+    <button class="btn" id="playBtn">▶ PLAY</button>
+    <button class="btn alt" id="levelBtn">☷ LEVELS</button>
+    <button class="btn alt" id="resetBtn">↻ RESET PROGRESS</button>
+   </div>
+   <div class="small">Progress is saved automatically on this device.</div>
+  </div>
+ </div>
+
+ <div class="overlay hidden" id="levels">
+  <div class="levelCard">
+   <div class="levelTop"><h2>SELECT LEVEL</h2><button class="btn alt" id="closeLevels">CLOSE</button></div>
+   <div class="levelGrid" id="levelGrid"></div>
+  </div>
+ </div>
+
+ <div class="overlay hidden" id="pause">
+  <div class="card">
+   <h2 class="resultTitle">GAME PAUSED</h2>
+   <p>Take a break. Your current level is safe.</p>
+   <div class="actions"><button class="btn" id="resumeBtn">▶ RESUME</button><button class="btn alt" id="pauseHomeBtn">HOME</button></div>
+  </div>
+ </div>
+
+ <div class="overlay hidden" id="result">
+  <div class="card">
+   <div class="resultTitle" id="resultTitle">LEVEL COMPLETE!</div>
+   <div class="stars" id="resultStars">⭐⭐⭐</div>
+   <p id="resultText"></p>
+   <div class="actions">
+    <button class="btn" id="nextBtn">NEXT LEVEL</button>
+    <button class="btn alt" id="retryBtn">RETRY</button>
+   </div>
+  </div>
+ </div>
+</div>
+</div>
+
 <script>
 "use strict";
-const canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
-const levelEl=document.getElementById("level"),scoreEl=document.getElementById("score"),starsEl=document.getElementById("stars"),menu=document.getElementById("menu"),levels=document.getElementById("levels"),grid=document.getElementById("grid"),toast=document.getElementById("toast");
-let W=0,H=0,dpr=1,level=Math.max(1,Math.min(1000,+localStorage.getItem("bsLevel")||1)),score=0,stars=+(localStorage.getItem("bsStars")||0);
-let board=[],cols=6,rows=9,R=22,cx=0,top=20,shooterX=0,shooterY=0,cur=0,next=1,angle=-Math.PI/2,shots=0,maxMiss=5,gameOver=false,anim=[];
-const colors=["#ff4d78","#ffd84d","#59e88d","#4db8ff","#b86cff","#ff8d4d","#42e6d3"];
-function cfg(l){return {colors:Math.min(7,3+Math.floor((l-1)/180)),rows:Math.min(11,5+Math.floor((l-1)/110)),miss:Math.max(2,6-Math.floor((l-1)/220)),seed:l*99991};}
-function resize(){const r=canvas.getBoundingClientRect();dpr=Math.min(2,devicePixelRatio||1);W=r.width;H=r.height;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);R=Math.max(14,Math.min(25,W/15));cols=Math.max(6,Math.floor(W/(R*2.02)));cx=W/2;top=Math.max(18,R);shooterX=cx;shooterY=H-R*1.8;if(board.length) draw();}
-addEventListener("resize",resize);
-function rand(seed){let x=Math.sin(seed)*43758.5453;return x-Math.floor(x)}
-function newGame(l=level){level=l;const c=cfg(level);board=[];score=0;shots=0;maxMiss=c.miss;gameOver=false;anim=[];cur=Math.floor(rand(c.seed)*c.colors);next=Math.floor(rand(c.seed+7)*c.colors);for(let y=0;y<c.rows;y++){let row=[];for(let x=0;x<cols;x++){let p=rand(c.seed+y*97+x*13);row.push(p<.82?Math.floor(rand(c.seed+y*41+x*9)*c.colors):-1)}board.push(row)};while(board.length<Math.max(1,c.rows))board.push([]);updateHUD();menu.style.display="none";levels.style.display="none";draw()}
-function updateHUD(){levelEl.textContent=level;scoreEl.textContent=score;starsEl.textContent=stars}
-function pos(x,y){return {x:x*R*2+R+(y%2)*R,y:top+y*R*1.73}}
-function neighbors(x,y){let odd=y%2;return odd?[[x-1,y-1],[x,y-1],[x-1,y],[x+1,y],[x-1,y+1],[x,y+1]]:[[x,y-1],[x+1,y-1],[x-1,y],[x+1,y],[x,y+1],[x+1,y+1]]}
-function valid(x,y){return y>=0&&y<board.length&&x>=0&&x<cols}
-function group(sx,sy){const target=board[sy]?.[sx];if(target<0)return[];let out=[],q=[[sx,sy]],seen=new Set([sx+","+sy]);while(q.length){let [x,y]=q.pop();out.push([x,y]);for(const [nx,ny] of neighbors(x,y)){if(valid(nx,ny)&&board[ny][nx]===target&&!seen.has(nx+","+ny)){seen.add(nx+","+ny);q.push([nx,ny])}}}return out}
-function connected(){let keep=new Set(),q=[];for(let x=0;x<cols;x++)if(valid(x,0)&&board[0][x]>=0){q.push([x,0]);keep.add(x+",0")}while(q.length){let [x,y]=q.pop();for(const [nx,ny] of neighbors(x,y))if(valid(nx,ny)&&board[ny][nx]>=0&&!keep.has(nx+","+ny)){keep.add(nx+","+ny);q.push([nx,ny])}}return keep}
-function addRow(){let c=cfg(level);board.unshift(Array.from({length:cols},(_,x)=>Math.floor(rand(c.seed+shots*71+x*17)%1*c.colors));for(let y=board.length-1;y>=0;y--){}}
-function findAttach(px,py){let best=null,bd=1e9;for(let y=0;y<Math.min(board.length+1,14);y++)for(let x=0;x<cols;x++){if(board[y]&&board[y][x]>=0)continue;let p=pos(x,y),d=(p.x-px)**2+(p.y-py)**2;if(d<bd){bd=d;best=[x,y]}}return best||[Math.floor(cols/2),0]}
-function shoot(){if(gameOver||menu.style.display!=="none")return;const speed=12, sx=shooterX,sy=shooterY;let vx=Math.cos(angle)*speed,vy=Math.sin(angle)*speed,x=sx,y=sy;for(let i=0;i<500;i++){x+=vx;y+=vy;if(x<R||x>W-R)vx*=-1;if(y<top+R){y=top+R;break}let hit=false;for(let yy=0;yy<board.length&&!hit;yy++)for(let xx=0;xx<cols;xx++)if(board[yy][xx]>=0){let p=pos(xx,yy);if((p.x-x)**2+(p.y-y)**2<(R*1.75)**2){hit=true;break}}if(hit)break}let a=findAttach(x,y);if(!board[a[1]])board[a[1]]=Array(cols).fill(-1);board[a[1]][a[0]]=cur;let g=group(a[0],a[1]);shots++;if(g.length>=3){g.forEach(([xx,yy])=>{board[yy][xx]=-1;score+=10});let keep=connected(),drop=[];for(let yy=0;yy<board.length;yy++)for(let xx=0;xx<cols;xx++)if(board[yy][xx]>=0&&!keep.has(xx+","+yy)){drop.push([xx,yy]);board[yy][xx]=-1}score+=drop.length*25;shots=0}else if(shots>=maxMiss){addRow();shots=0}cur=next;next=Math.floor(Math.random()*cfg(level).colors);cleanup();checkEnd();updateHUD();draw()}
-function cleanup(){while(board.length&&board[board.length-1].every(v=>v<0))board.pop()}
-function checkEnd(){for(let y=0;y<board.length;y++)for(let x=0;x<cols;x++)if(board[y][x]>=0&&pos(x,y).y+R>=shooterY-R){gameOver=true;setTimeout(()=>alert("Game Over! Level "+level+" — Try again."),50);return}let left=board.flat().filter(v=>v>=0).length;if(left===0){let s=score>=level*120?3:score>=level*70?2:1;stars=Math.max(stars,s);localStorage.setItem("bsStars",stars);if(level<1000){toast.textContent="LEVEL "+level+" COMPLETE! ⭐".repeat(s);toast.style.display="block";setTimeout(()=>{toast.style.display="none";newGame(level+1);localStorage.setItem("bsLevel",level)},900)}else{gameOver=true;setTimeout(()=>alert("🏆 AMAZING! You completed all 1000 levels!"),50)}}}
-function drawBubble(x,y,i,r=R){let g=ctx.createRadialGradient(x-r*.35,y-r*.45,r*.1,x,y,r);g.addColorStop(0,"#fff");g.addColorStop(.13,colors[i]);g.addColorStop(1,colors[i]);ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#ffffff55";ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle="#fff8";ctx.beginPath();ctx.arc(x-r*.35,y-r*.42,r*.16,0,Math.PI*2);ctx.fill()}
-function draw(){ctx.clearRect(0,0,W,H);let bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#171745");bg.addColorStop(1,"#09091e");ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);for(let y=0;y<board.length;y++)for(let x=0;x<cols;x++)if(board[y]&&board[y][x]>=0){let p=pos(x,y);drawBubble(p.x,p.y,board[y][x])}let ax=shooterX,ay=shooterY;ctx.save();ctx.setLineDash([8,8]);ctx.lineWidth=2;ctx.strokeStyle="#fff8";ctx.beginPath();ctx.moveTo(ax,ay);let vx=Math.cos(angle),vy=Math.sin(angle),xx=ax,yy=ay;for(let i=0;i<30;i++){xx+=vx*18;yy+=vy*18;if(xx<R||xx>W-R){vx*=-1;xx=Math.max(R,Math.min(W-R,xx))}if(yy<top+R)break;ctx.lineTo(xx,yy)}ctx.stroke();ctx.restore();drawBubble(shooterX,shooterY,cur,R*1.05);drawBubble(Math.min(W-30,shooterX+R*3),shooterY,R?next:next,R*.62);ctx.fillStyle="#ffffff99";ctx.font="12px system-ui";ctx.textAlign="center";ctx.fillText("NEXT",Math.min(W-30,shooterX+R*3),shooterY+R*1.35)}
-function pointer(e){let r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;angle=Math.atan2(y-shooterY,x-shooterX);angle=Math.max(-Math.PI+.15,Math.min(-.15,angle));draw()}
-canvas.addEventListener("pointermove",pointer);canvas.addEventListener("pointerdown",e=>{pointer(e);shoot()});addEventListener("keydown",e=>{if(e.code==="Space")shoot()});
-document.getElementById("play").onclick=()=>newGame(level);
-document.getElementById("choose").onclick=()=>{levels.style.display="block";grid.innerHTML="";for(let i=1;i<=1000;i++){let b=document.createElement("button");b.textContent=i;if(i>level)b.className="lock";else b.onclick=()=>newGame(i);grid.appendChild(b)}};
-document.getElementById("closeLevels").onclick=()=>levels.style.display="none";
-document.getElementById("reset").onclick=()=>{if(confirm("Reset all progress?")){localStorage.removeItem("bsLevel");localStorage.removeItem("bsStars");level=1;stars=0;updateHUD();newGame(1)}};
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+const C=["#ff4f82","#ffd34d","#58e38d","#4bb9ff","#b86cff","#ff8b4d","#35d8d0","#f15cff"];
+
+let W=0,H=0,DPR=1,R=20,cols=8,board=[],level=Number(localStorage.getItem("bubble_level")||1);
+let unlocked=Math.max(1,Number(localStorage.getItem("bubble_unlocked")||level));
+let stars=Number(localStorage.getItem("bubble_stars")||0),score=0,shots=0,missLimit=5;
+let current=0,next=1,angle=-Math.PI/2,playing=false,gameEnded=false,seed=1;
+
+function save(){
+ localStorage.setItem("bubble_level",String(level));
+ localStorage.setItem("bubble_unlocked",String(unlocked));
+ localStorage.setItem("bubble_stars",String(stars));
+}
+function rng(n){const x=Math.sin(n*12.9898+78.233)*43758.5453123;return x-Math.floor(x)}
+function cfg(l){
+ return {
+  colors:Math.min(8,4+Math.floor((l-1)/140)),
+  rows:Math.min(14,5+Math.floor((l-1)/70)),
+  density:Math.min(.92,.66+l*.00022),
+  miss:Math.max(2,6-Math.floor((l-1)/180)),
+  target:Math.max(1,Math.floor(8+(l-1)*.045))
+ };
+}
+function resize(){
+ const r=canvas.getBoundingClientRect();
+ DPR=Math.min(2,window.devicePixelRatio||1);
+ W=r.width;H=r.height;
+ canvas.width=Math.max(1,Math.floor(W*DPR));canvas.height=Math.max(1,Math.floor(H*DPR));
+ ctx.setTransform(DPR,0,0,DPR,0,0);
+ R=Math.max(13,Math.min(25,W/18));
+ cols=Math.max(7,Math.floor((W-10)/(R*2)));
+ if(playing) draw();
+}
+window.addEventListener("resize",resize);
+
+function pos(x,y){
+ return {x:R+x*R*2+(y%2)*R,y:R+18+y*R*1.73};
+}
+function valid(x,y){return y>=0&&y<board.length&&x>=0&&x<cols&&board[y]&&board[y][x]>=0}
+function neigh(x,y){
+ return y%2
+ ? [[x-1,y-1],[x,y-1],[x-1,y],[x+1,y],[x-1,y+1],[x,y+1]]
+ : [[x,y-1],[x+1,y-1],[x-1,y],[x+1,y],[x,y+1],[x+1,y+1]];
+}
+function group(sx,sy){
+ if(!valid(sx,sy))return [];
+ const target=board[sy][sx],q=[[sx,sy]],out=[],seen=new Set([sx+","+sy]);
+ while(q.length){
+  const [x,y]=q.pop();out.push([x,y]);
+  for(const [nx,ny] of neigh(x,y)) if(valid(nx,ny)&&board[ny][nx]===target&&!seen.has(nx+","+ny)){
+   seen.add(nx+","+ny);q.push([nx,ny]);
+  }
+ }
+ return out;
+}
+function anchored(){
+ const keep=new Set(),q=[];
+ for(let x=0;x<cols;x++) if(valid(x,0)){q.push([x,0]);keep.add(x+",0")}
+ while(q.length){
+  const [x,y]=q.pop();
+  for(const [nx,ny] of neigh(x,y)) if(valid(nx,ny)&&!keep.has(nx+","+ny)){
+   keep.add(nx+","+ny);q.push([nx,ny]);
+  }
+ }
+ return keep;
+}
+function makeBoard(){
+ const c=cfg(level);seed=level*7919+17;
+ board=[];
+ for(let y=0;y<c.rows;y++){
+  const row=[];
+  for(let x=0;x<cols;x++){
+   const v=rng(seed+y*131+x*37);
+   row.push(v<c.density?Math.floor(rng(seed+y*19+x*73)*c.colors):-1);
+  }
+  board.push(row);
+ }
+ // Avoid impossible first-shot colors and ensure enough bubbles.
+ if(board.length&&board[0].every(v=>v<0)) board[0][Math.floor(cols/2)]=0;
+}
+function start(l=level){
+ level=Math.max(1,Math.min(1000,l));
+ score=0;shots=0;gameEnded=false;playing=true;
+ const c=cfg(level);missLimit=c.miss;
+ makeBoard();
+ current=Math.floor(rng(seed+5)*c.colors);
+ next=Math.floor(rng(seed+29)*c.colors);
+ hideAll();updateHUD();draw();
+}
+function updateHUD(){
+ $("levelNo").textContent=level+" / 1000";
+ $("stars").textContent=stars;
+ $("score").textContent=score.toLocaleString();
+}
+function hideAll(){
+ ["home","levels","pause","result"].forEach(id=>$(id).classList.add("hidden"));
+}
+function showMessage(t){
+ const m=$("message");m.textContent=t;m.style.display="block";
+ clearTimeout(showMessage.timer);showMessage.timer=setTimeout(()=>m.style.display="none",900);
+}
+function showLevels(){
+ const g=$("levelGrid");g.innerHTML="";
+ for(let i=1;i<=1000;i++){
+  const b=document.createElement("button");
+  b.className="levelBtn "+(i<unlocked?"done":i===unlocked?"current":"locked");
+  b.textContent=i;
+  b.disabled=i>unlocked;
+  b.onclick=()=>start(i);
+  g.appendChild(b);
+ }
+ $("levels").classList.remove("hidden");
+}
+function bubble(x,y,i,r=R){
+ const grad=ctx.createRadialGradient(x-r*.35,y-r*.42,r*.05,x,y,r);
+ grad.addColorStop(0,"#ffffff");
+ grad.addColorStop(.11,C[i]);
+ grad.addColorStop(.72,C[i]);
+ grad.addColorStop(1,"#0005");
+ ctx.fillStyle=grad;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#ffffff55";ctx.lineWidth=1.4;ctx.stroke();
+ ctx.fillStyle="#ffffff90";ctx.beginPath();ctx.arc(x-r*.34,y-r*.4,r*.15,0,Math.PI*2);ctx.fill();
+}
+function draw(){
+ if(!W||!H)return;
+ ctx.clearRect(0,0,W,H);
+ const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#181e4b");bg.addColorStop(.55,"#0d1232");bg.addColorStop(1,"#080a1e");
+ ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ for(let y=0;y<board.length;y++)for(let x=0;x<cols;x++)if(valid(x,y)){const p=pos(x,y);bubble(p.x,p.y,board[y][x]);}
+ const sx=W/2,sy=H-R*1.35;
+ ctx.save();ctx.setLineDash([7,8]);ctx.strokeStyle="#ffffff70";ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(sx,sy);
+ let vx=Math.cos(angle),vy=Math.sin(angle),xx=sx,yy=sy;
+ for(let i=0;i<45;i++){
+  xx+=vx*16;yy+=vy*16;
+  if(xx<R||xx>W-R){vx*=-1;xx=Math.max(R,Math.min(W-R,xx));}
+  if(yy<R+10)break;
+  ctx.lineTo(xx,yy);
+ }
+ ctx.stroke();ctx.restore();
+ bubble(sx,sy,current,R*1.08);
+ const nx=Math.min(W-34,sx+R*3.1);
+ bubble(nx,sy,next,R*.62);
+ ctx.fillStyle="#ffffffaa";ctx.font="11px system-ui";ctx.textAlign="center";ctx.fillText("NEXT",nx,sy+R*1.1);
+}
+function aim(e){
+ const r=canvas.getBoundingClientRect();
+ const x=e.clientX-r.left,y=e.clientY-r.top;
+ angle=Math.atan2(y-H+R*1.35,x-W/2);
+ angle=Math.max(-Math.PI+.16,Math.min(-.16,angle));
+ draw();
+}
+function findSlot(px,py){
+ let best=null,bd=Infinity;
+ for(let y=0;y<Math.min(board.length+2,18);y++){
+  if(!board[y])board[y]=Array(cols).fill(-1);
+  for(let x=0;x<cols;x++){
+   if(board[y][x]>=0)continue;
+   const p=pos(x,y),d=(p.x-px)**2+(p.y-py)**2;
+   if(d<bd){bd=d;best=[x,y];}
+  }
+ }
+ return best||[Math.floor(cols/2),0];
+}
+function addRow(){
+ const c=cfg(level);
+ const row=Array.from({length:cols},(_,x)=>Math.floor(rng(seed+shots*83+x*17)*c.colors));
+ board.unshift(row);
+}
+function shoot(){
+ if(!playing||gameEnded)return;
+ const sx=W/2,sy=H-R*1.35,speed=Math.max(10,R*.52);
+ let x=sx,y=sy,vx=Math.cos(angle)*speed,vy=Math.sin(angle)*speed,hit=false;
+ for(let i=0;i<800;i++){
+  x+=vx;y+=vy;
+  if(x<R||x>W-R){vx*=-1;x=Math.max(R,Math.min(W-R,x));}
+  if(y<R+10){y=R+10;break;}
+  outer:for(let yy=0;yy<board.length;yy++)for(let xx=0;xx<cols;xx++)if(valid(xx,yy)){
+   const p=pos(xx,yy);
+   if((p.x-x)**2+(p.y-y)**2<(R*1.7)**2){hit=true;break outer;}
+  }
+  if(hit)break;
+ }
+ const [ax,ay]=findSlot(x,y);
+ board[ay][ax]=current;
+ const g=group(ax,ay);
+ shots++;
+ if(g.length>=3){
+  for(const [gx,gy] of g){board[gy][gx]=-1;score+=10;}
+  const keep=anchored();let dropped=0;
+  for(let yy=0;yy<board.length;yy++)for(let xx=0;xx<cols;xx++)if(valid(xx,yy)&&!keep.has(xx+","+yy)){
+   board[yy][xx]=-1;dropped++;
+  }
+  score+=dropped*25;
+  if(dropped)showMessage("DROP BONUS +"+dropped*25);
+  shots=0;
+ }else if(shots>=missLimit){
+  addRow();shots=0;showMessage("NEW BUBBLE ROW!");
+ }
+ const c=cfg(level);current=next;next=Math.floor(Math.random()*c.colors);
+ while(board.length&&board[board.length-1].every(v=>v<0))board.pop();
+ checkState();updateHUD();draw();
+}
+function checkState(){
+ const left=board.reduce((n,row)=>n+row.filter(v=>v>=0).length,0);
+ if(left===0){finishLevel();return;}
+ for(let y=0;y<board.length;y++)for(let x=0;x<cols;x++)if(valid(x,y)&&pos(x,y).y+R>=H-R*2.35){loseLevel();return;}
+}
+function finishLevel(){
+ gameEnded=true;
+ const earned=score>=level*110?3:score>=level*65?2:1;
+ if(earned>stars)stars=earned;
+ if(level>=unlocked&&unlocked<1000)unlocked=level+1;
+ save();updateHUD();
+ $("resultTitle").textContent=level===1000?"🏆 1000 LEVELS COMPLETE!":"LEVEL "+level+" COMPLETE!";
+ $("resultStars").textContent="⭐".repeat(earned)+"☆".repeat(3-earned);
+ $("resultText").textContent=level===1000?"Amazing! You completed the full Bubble Shooter journey!":"Score: "+score.toLocaleString()+" • Level "+level+" cleared.";
+ $("nextBtn").textContent=level===1000?"PLAY AGAIN":"NEXT LEVEL";
+ $("result").classList.remove("hidden");
+}
+function loseLevel(){
+ gameEnded=true;
+ $("resultTitle").textContent="GAME OVER";
+ $("resultStars").textContent="💥";
+ $("resultText").textContent="The bubbles reached the bottom. Try level "+level+" again.";
+ $("nextBtn").textContent="RETRY LEVEL";
+ $("result").classList.remove("hidden");
+}
+canvas.addEventListener("pointermove",aim);
+canvas.addEventListener("pointerdown",e=>{aim(e);shoot();});
+window.addEventListener("keydown",e=>{if(e.code==="Space")shoot();if(e.code==="Escape"&&playing&&!gameEnded)togglePause();});
+
+function togglePause(){
+ if(!playing||gameEnded)return;
+ $("pause").classList.toggle("hidden");
+ if($("pause").classList.contains("hidden")){draw();}
+}
+$("playBtn").onclick=()=>start(level);
+$("levelBtn").onclick=showLevels;
+$("levelsBtn").onclick=()=>{if(playing)showLevels();else showLevels();};
+$("closeLevels").onclick=()=>{if(playing) $("levels").classList.add("hidden");else $("levels").classList.add("hidden");};
+$("pauseBtn").onclick=togglePause;
+$("resumeBtn").onclick=togglePause;
+$("pauseHomeBtn").onclick=()=>{playing=false;hideAll();$("home").classList.remove("hidden");};
+$("nextBtn").onclick=()=>{ $("result").classList.add("hidden"); if(level>=1000)start(1); else start(level+1); };
+$("retryBtn").onclick=()=>start(level);
+$("resetBtn").onclick=()=>{if(confirm("Reset all 1000-level progress?")){localStorage.removeItem("bubble_level");localStorage.removeItem("bubble_unlocked");localStorage.removeItem("bubble_stars");level=1;unlocked=1;stars=0;score=0;updateHUD();start(1);}};
 resize();updateHUD();
 </script>
-</body></html>
+</body>
+</html>
