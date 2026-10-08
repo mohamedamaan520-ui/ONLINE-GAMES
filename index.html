@@ -20,8 +20,8 @@ header{height:68px;flex:none;display:flex;align-items:center;gap:12px;padding:9p
 #wrap{position:relative;flex:1;min-height:0}
 canvas{display:block;width:100%;height:100%;touch-action:none}
 .overlay{position:absolute;inset:0;z-index:20;background:#07091acc;display:flex;align-items:center;justify-content:center;padding:18px}
-.card{width:min(570px,94vw);padding:28px 24px;border:1px solid #ffffff1c;border-radius:28px;background:linear-gradient(145deg,#20265ceF,#0d102beF);box-shadow:0 28px 90px #0009;text-align:center}
-.hero{font-size:clamp(38px,8vw,72px);line-height:.95;font-weight:950;margin:0 0 12px;background:linear-gradient(90deg,#ff559f,#ffe06b,#61e7ff);color:transparent;background-clip:text}
+.card{width:min(570px,94vw);padding:28px 24px;border:1px solid #ffffff1c;border-radius:28px;background:linear-gradient(145deg,#20265ceF,#0d102beF);box-shadow:0 28px 90px #0009;text-align:center;position:relative;overflow:hidden}.homeCard{animation:cardIn .8s cubic-bezier(.2,.8,.2,1)}.homeCard:before{content:"";position:absolute;inset:-2px;background:linear-gradient(120deg,transparent 20%,#ffffff12 45%,transparent 70%);transform:translateX(-120%);animation:shine 4s ease-in-out infinite}.badge{display:inline-block;padding:7px 12px;border-radius:999px;background:#ffffff0b;border:1px solid #ffffff18;color:#ffd96a;font-size:11px;font-weight:900;letter-spacing:1.2px}.hero span{filter:drop-shadow(0 10px 24px #7c5cff66)}.heroLine{display:flex;align-items:center;gap:8px;justify-content:center;color:#9ea7d8;font-size:10px;letter-spacing:2px;margin:14px 0 2px}.heroLine span{height:1px;width:55px;background:linear-gradient(90deg,transparent,#ffffff55)}.heroLine span:last-child{background:linear-gradient(90deg,#ffffff55,transparent)}.homeGlow{position:absolute;width:220px;height:220px;border-radius:50%;filter:blur(45px);opacity:.25;pointer-events:none}.g1{background:#ff4f9a;left:5%;top:15%;animation:floatGlow 6s ease-in-out infinite}.g2{background:#4bb9ff;right:5%;bottom:10%;animation:floatGlow 7s ease-in-out infinite reverse}.homeBubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden}.homeBubbles i{position:absolute;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff,#61e7ff 22%,#4b7cff 70%,transparent 72%);opacity:.45;animation:rise 7s linear infinite}.homeBubbles i:nth-child(1){left:8%;bottom:-30px}.homeBubbles i:nth-child(2){left:22%;bottom:-80px;animation-delay:2s;transform:scale(.65)}.homeBubbles i:nth-child(3){left:80%;bottom:-50px;animation-delay:1s;transform:scale(1.3)}.homeBubbles i:nth-child(4){left:91%;bottom:-100px;animation-delay:3.5s;transform:scale(.55)}.homeBubbles i:nth-child(5){left:67%;bottom:-70px;animation-delay:5s;transform:scale(.8)}.homeBubbles i:nth-child(6){left:45%;bottom:-50px;animation-delay:4s;transform:scale(.5)}@keyframes cardIn{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:none}}@keyframes shine{0%,55%{transform:translateX(-120%)}75%,100%{transform:translateX(120%)}}@keyframes floatGlow{50%{transform:translate(25px,-20px) scale(1.15)}}@keyframes rise{to{transform:translateY(-115vh) rotate(180deg);opacity:0}}
+.hero{font-size:clamp(38px,8vw,72px);line-height:.95;font-weight:950;margin:12px 0 0;background:linear-gradient(90deg,#ff559f,#ffe06b,#61e7ff);color:transparent;background-clip:text;letter-spacing:-2px}
 .card p{color:#cbd0ef;margin:8px auto 20px;max-width:470px;line-height:1.5}
 .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .btn{border:0;border-radius:15px;padding:13px 16px;color:#fff;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#ff4f9a,#765cff);box-shadow:0 9px 28px #0005}
@@ -65,9 +65,12 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
  <div id="message"></div>
 
  <div class="overlay" id="home">
-  <div class="card">
-   <h1 class="hero">BUBBLE<br>SHOOTER</h1>
-   <p>Match 3 or more bubbles, make bank shots and clear every bubble. <b>1000 levels</b> with increasing difficulty.</p>
+  <div class="homeGlow g1"></div><div class="homeGlow g2"></div><div class="homeBubbles"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="card homeCard">
+   <div class="badge">✦ 1000 LEVEL ADVENTURE ✦</div>
+   <h1 class="hero">BUBBLE<br><span>SHOOTER</span></h1>
+   <div class="heroLine"><span></span><b>POP • MATCH • BLAST</b><span></span></div>
+   <p>Connect <b>3 or more touching bubbles</b> of the same colour and blast them with satisfying pop and drop animations.</p>
    <div class="actions">
     <button class="btn" id="playBtn">▶ PLAY</button>
     <button class="btn alt" id="levelBtn">☷ LEVELS</button>
