@@ -343,15 +343,13 @@ function shoot(){
    effects.push({type:"pop",gx,gy,color:C[board[gy][gx]],t:performance.now(),d:420,seed:Math.random()*6.28});
    board[gy][gx]=-1;score+=10;
   }
-  const keep=anchored();let dropped=0;
-  for(let yy=0;yy<board.length;yy++)for(let xx=0;xx<cols;xx++)if(valid(xx,yy)&&!keep.has(xx+","+yy)){
-   const ci=board[yy][xx];
-   effects.push({type:"fall",gx:xx,gy:yy,colorIndex:ci,t:performance.now()+Math.random()*80,d:620+Math.random()*180,vy:260+Math.random()*180,rot:(Math.random()-.5)*2});
-   board[yy][xx]=-1;dropped++;
-  }
-  score+=dropped*25;
+  // Only the connected bubbles of the SAME colour are removed.
+  // Other colours stay exactly where they are; they never fall just because
+  // a different colour was matched.
+  let dropped=0;
   shots=0;
-  showMessage("💥 "+g.length+" MATCHED!"+(dropped?"  ⬇ "+dropped+" DROPPED":""));
+  showMessage("💥 "+g.length+" "+C[current]+" BUBBLES MATCHED!");
+
   animateEffects(()=>{
    while(board.length&&board[board.length-1].every(v=>v<0))board.pop();
    checkState();updateHUD();draw();
