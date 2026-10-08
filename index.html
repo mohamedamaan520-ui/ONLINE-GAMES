@@ -118,6 +118,7 @@ let W=0,H=0,DPR=1,R=20,cols=8,board=[],level=Number(localStorage.getItem("bubble
 let unlocked=Math.max(1,Number(localStorage.getItem("bubble_unlocked")||level));
 let stars=Number(localStorage.getItem("bubble_stars")||0),score=0,shots=0,missLimit=5;
 let current=0,next=1,angle=-Math.PI/2,playing=false,gameEnded=false,seed=1;
+let effects=[],animating=false;
 
 function save(){
  localStorage.setItem("bubble_level",String(level));
@@ -252,7 +253,30 @@ function draw(){
  }
  ctx.stroke();ctx.restore();
  bubble(sx,sy,current,R*1.08);
- const nx=Math.min(W-34,sx+R*3.1);
+ 
+ // Blast / falling animations
+ for(const e of effects){
+  if(e.type==="pop"){
+   const p=pos(e.gx,e.gy),q=Math.min(1,(performance.now()-e.t)/e.d),s=1+q*1.45;
+   ctx.save();ctx.globalAlpha=1-q;
+   ctx.strokeStyle=e.color;ctx.lineWidth=3+6*(1-q);
+   ctx.beginPath();ctx.arc(p.x,p.y,R*s,0,Math.PI*2);ctx.stroke();
+   ctx.fillStyle=e.color;
+   ctx.globalAlpha=(1-q)*.9;
+   ctx.beginPath();ctx.arc(p.x,p.y,R*(1-q)*.65,0,Math.PI*2);ctx.fill();
+   for(let k=0;k<8;k++){
+    const a=e.seed+k*Math.PI/4,rr=R*(1+q*2.2);
+    ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(p.x+Math.cos(a)*rr,p.y+Math.sin(a)*rr,Math.max(1.5,R*.09*(1-q)),0,Math.PI*2);ctx.fill();
+   }
+   ctx.restore();
+  }else if(e.type==="fall"){
+   const q=Math.min(1,(performance.now()-e.t)/e.d),p=pos(e.gx,e.gy);
+   const fy=p.y+e.vy*q*q*e.d/1000;
+   ctx.save();ctx.globalAlpha=1-q;ctx.translate(p.x,fy);ctx.rotate(e.rot*q);bubble(0,0,e.colorIndex,R);ctx.restore();
+  }
+ }
+ if(effects.length) requestAnimationFrame(draw);
+
  bubble(nx,sy,next,R*.62);
  ctx.fillStyle="#ffffffaa";ctx.font="11px system-ui";ctx.textAlign="center";ctx.fillText("NEXT",nx,sy+R*1.1);
 }
@@ -280,8 +304,19 @@ function addRow(){
  const row=Array.from({length:cols},(_,x)=>Math.floor(rng(seed+shots*83+x*17)*c.colors));
  board.unshift(row);
 }
+function animateEffects(done){
+ const started=performance.now();
+ function frame(){
+  const now=performance.now();
+  effects=effects.filter(e=>now-e.t<e.d);
+  draw();
+  if(effects.length){requestAnimationFrame(frame);}
+  else{animating=false;done();}
+ }
+ requestAnimationFrame(frame);
+}
 function shoot(){
- if(!playing||gameEnded)return;
+ if(!playing||gameEnded||animating)return;
  const sx=W/2,sy=H-R*1.35,speed=Math.max(10,R*.52);
  let x=sx,y=sy,vx=Math.cos(angle)*speed,vy=Math.sin(angle)*speed,hit=false;
  for(let i=0;i<800;i++){
@@ -298,19 +333,31 @@ function shoot(){
  board[ay][ax]=current;
  const g=group(ax,ay);
  shots++;
+ const c=cfg(level);
+ current=next;next=Math.floor(Math.random()*c.colors);
  if(g.length>=3){
-  for(const [gx,gy] of g){board[gy][gx]=-1;score+=10;}
+  animating=true;
+  effects=[];
+  for(const [gx,gy] of g){
+   effects.push({type:"pop",gx,gy,color:C[board[gy][gx]],t:performance.now(),d:420,seed:Math.random()*6.28});
+   board[gy][gx]=-1;score+=10;
+  }
   const keep=anchored();let dropped=0;
   for(let yy=0;yy<board.length;yy++)for(let xx=0;xx<cols;xx++)if(valid(xx,yy)&&!keep.has(xx+","+yy)){
+   const ci=board[yy][xx];
+   effects.push({type:"fall",gx:xx,gy:yy,colorIndex:ci,t:performance.now()+Math.random()*80,d:620+Math.random()*180,vy:260+Math.random()*180,rot:(Math.random()-.5)*2});
    board[yy][xx]=-1;dropped++;
   }
   score+=dropped*25;
-  if(dropped)showMessage("DROP BONUS +"+dropped*25);
   shots=0;
- }else if(shots>=missLimit){
-  addRow();shots=0;showMessage("NEW BUBBLE ROW!");
+  showMessage("💥 "+g.length+" MATCHED!"+(dropped?"  ⬇ "+dropped+" DROPPED":""));
+  animateEffects(()=>{
+   while(board.length&&board[board.length-1].every(v=>v<0))board.pop();
+   checkState();updateHUD();draw();
+  });
+  return;
  }
- const c=cfg(level);current=next;next=Math.floor(Math.random()*c.colors);
+ if(shots>=missLimit){addRow();shots=0;showMessage("NEW BUBBLE ROW!");}
  while(board.length&&board[board.length-1].every(v=>v<0))board.pop();
  checkState();updateHUD();draw();
 }
