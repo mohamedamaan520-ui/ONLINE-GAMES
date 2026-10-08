@@ -253,6 +253,7 @@ function draw(){
  }
  ctx.stroke();ctx.restore();
  bubble(sx,sy,current,R*1.08);
+ const nx=Math.min(W-34,sx+R*3.1);
  
  // Blast / falling animations
  for(const e of effects){
